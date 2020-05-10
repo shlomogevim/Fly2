@@ -1,12 +1,9 @@
 package com.example.fly2
 
-import android.media.CamcorderProfile
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.view.MotionEvent
-import android.widget.Toast
 import com.google.ar.core.Anchor
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.Node
@@ -22,6 +19,77 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     //url it dinosur , setScale(0.5)
+    private val url =
+        "https://firebasestorage.googleapis.com/v0/b/thermal-proton-239415.appspot.com/o/dinosur1.glb?alt=media&token=d469fb0d-e964-482f-9209-5109c16aca16"
+
+    //url1 it the bird ,  setScale(0.002f)
+    //  private val url1="https://firebasestorage.googleapis.com/v0/b/thermal-proton-239415.appspot.com/o/out.glb?alt=media&token=1a1bca0f-143e-446e-bbb8-1b49700bcdb8"
+
+   //url1 it the bee_drill
+    private val url2 =
+        "https://firebasestorage.googleapis.com/v0/b/thermal-proton-239415.appspot.com/o/bee_drill.glb?alt=media&token=316a6329-b928-417f-b6fb-13efdf0dff0e"
+
+    lateinit var arFragment: ArFragment
+    private val nodes = mutableListOf<RotatingNode>()
+
+    private val model = Models.Bee
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        arFragment = fragment as ArFragment
+        arFragment.setOnTapArPlaneListener { hitResult, _, _ ->
+            spawnObject(hitResult.createAnchor(), Uri.parse(url2))
+
+        }
+    }
+
+    private fun spawnObject(anchor: Anchor, modelUri: Uri) {
+        val rendrebaleSource = RenderableSource.builder()
+            .setSource(this, modelUri, RenderableSource.SourceType.GLB)
+            .setScale(0.05f)
+            // .setScale(0.002f)
+            .setRecenterMode(RenderableSource.RecenterMode.ROOT)
+            .build()
+        ModelRenderable.builder()
+            .setSource(this, rendrebaleSource)
+            .setRegistryId(modelUri)
+            .build()
+            .thenAccept {
+                addNotesToScene1(anchor, it)
+            }.exceptionally {
+                Log.e("clima", "Somthing go wrong in loading model")
+                null
+            }
+    }
+
+
+    private fun addNotesToScene1(anchor: Anchor, modelRenderable: ModelRenderable) {
+        val anchorNode = AnchorNode(anchor)
+        val rotatingNode = RotatingNode(model.degreesPerSecond).apply {
+            setParent(anchorNode)
+        }
+        Node().apply {
+            renderable = modelRenderable
+            setParent(rotatingNode)
+            localPosition = Vector3(model.radius, model.height, 0f)
+            localRotation = Quaternion.eulerAngles(Vector3(0f, model.rotationDegrees, 0f))
+            arFragment.arSceneView.scene.addChild(anchorNode)
+            nodes.add(rotatingNode)
+            val animateData=modelRenderable.getAnimationData("Beedrill_Animation")
+            ModelAnimator(animateData,modelRenderable).apply {
+                repeatCount=ModelAnimator.INFINITE
+                start()
+            }
+
+        }
+    }
+
+
+
+    //Original versia of Boubnd
+    /*
+     //url it dinosur , setScale(0.5)
     private val url =
         "https://firebasestorage.googleapis.com/v0/b/thermal-proton-239415.appspot.com/o/dinosur1.glb?alt=media&token=d469fb0d-e964-482f-9209-5109c16aca16"
 
@@ -65,7 +133,7 @@ class MainActivity : AppCompatActivity() {
         }
         arFragment.arSceneView.scene.addChild(anchorNode)
     }
-
+    * */
 
 //Original versia of fly
     /*  private val spaceship = Models.Bee
@@ -178,9 +246,11 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    */
+
     private fun eliminateDot() {
         arFragment.arSceneView.planeRenderer.isVisible = false
         arFragment.planeDiscoveryController.hide()
         arFragment.planeDiscoveryController.setInstructionView(null)
-    }*/
+    }
 }
