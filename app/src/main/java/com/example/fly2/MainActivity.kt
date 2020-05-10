@@ -21,6 +21,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
+
     private val spaceship = Models.Bee
     private var modelResourceId = R.raw.beedrill
 
